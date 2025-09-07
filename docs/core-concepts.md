@@ -27,6 +27,13 @@ In complex apps, one request may trigger several more.
 Ngx-testbox takes full control over async operations in the Zone-including HTTP-based on your defined HTTP call instructions at each step.  
 This gives you deterministic, stable test runs every time.
 
+## Combination of strict control with simple maintenance
+
+With ngx-testbox, you stay in full control of asynchronous operations.  
+Every unexpected request or task is surfaced immediately, so nothing slips through unnoticed.
+
+At the same time, the library provides convenient utilities to enhance your development experience, such as predefined http call instructions and convenient harness for DOM interaction.
+
 ## Test-Driven Development
 
 Ngx-testbox also makes Test-Driven Development (TDD) practical.  
