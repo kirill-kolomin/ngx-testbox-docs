@@ -47,11 +47,14 @@ export const testIdMap = TestIdDirective.idsToMap(testIds);
 ### Write your first test case. Let's cover the error path of the component
 
 ```typescript
-import { DebugElementHarness } from 'ngx-testbox/testing';
-import { predefinedHttpCallInstructions, runTasksUntilStable } from 'ngx-testbox/testing';
+import {
+    predefinedHttpCallInstructions,
+    runTasksUntilStable,
+    DebugElementHarness
+} from 'ngx-testbox/testing';
 
 describe('form group', () => {
-    it('should hide error if there is no an error', () => {
+    it('should hide error initially', () => {
         const harness = new DebugElementHarness(fixture.debugElement, testIds);
         const errorElement = harness.elements.formError.query();
         
