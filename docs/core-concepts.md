@@ -13,7 +13,7 @@ Every unexpected request or task is surfaced immediately, so nothing slips throu
 
 At the same time, the library provides convenient utilities to enhance your development experience, such as predefined http call instructions and convenient harnesses for DOM interaction.
 
-## Decouple tests from code
+## Focus on features, not on code
 
 Human error causes many test failures — especially when developers try to mock complex internal logic.  
 This makes test cases larger, harder to maintain, and less readable.
