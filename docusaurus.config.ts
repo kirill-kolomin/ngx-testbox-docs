@@ -76,6 +76,7 @@ const config: Config = {
       logo: {
         alt: 'Ngx-Testbox Logo',
         src: 'img/logo.svg',
+        srcDark: 'img/icon_angular_wht.svg',
       },
       items: [
         {
@@ -84,9 +85,8 @@ const config: Config = {
           position: 'left',
           label: 'Tutorial',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/kirill-kolomin/ngx-testbox',
           label: 'GitHub',
           position: 'right',
         },
@@ -105,37 +105,19 @@ const config: Config = {
           ],
         },
         {
-          title: 'Community',
-          items: [
-            {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
-            },
-          ],
-        },
-        {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
+              label: 'GitHub',
+              href: 'https://github.com/kirill-kolomin/ngx-testbox',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'LinkedIn',
+              href: 'https://www.linkedin.com/in/kirill-kolomin/',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
