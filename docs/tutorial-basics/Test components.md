@@ -298,97 +298,97 @@ This example demonstrates how to test adding a new todo:
 
 ```typescript
 describe('TodosComponent Adding Todos', () => {
-  let fixture: ComponentFixture<TodosComponent>;
-  let component: TodosComponent;
-  let harness: DebugElementHarness<typeof testIds>;
+    let fixture: ComponentFixture<TodosComponent>;
+    let component: TodosComponent;
+    let harness: DebugElementHarness<typeof testIds>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TodosComponent],
-        providers: [provideHttpClient(), provideHttpClientTesting()]
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            declarations: [TodosComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting()]
+        });
+
+        fixture = TestBed.createComponent(TodosComponent);
+        component = fixture.componentInstance;
+        harness = new DebugElementHarness(fixture.debugElement, testIds);
+
+        // Initialize with empty todos
+        component.todos = [];
     });
 
-    fixture = TestBed.createComponent(TodosComponent);
-    component = fixture.componentInstance;
-    harness = new DebugElementHarness(fixture.debugElement, testIds);
+    it('should add a new todo when form is submitted', fakeAsync(() => {
+        // Arrange
+        const newTodoResponse = {id: 1, title: 'Buy groceries', completed: false};
 
-    // Initialize with empty todos
-    component.todos = [];
-  });
+        const addTodoSuccess = () =>
+            predefinedHttpCallInstructions.post.success(
+                'https://DOMAIN/api/todos',
+                newTodoResponse
+            );
 
-  it('should add a new todo when form is submitted', fakeAsync(() => {
-    // Arrange
-    const newTodoResponse = { id: 1, title: 'Buy groceries', completed: false };
+        // Act - Fill the form and submit
+        const todoInput = harness.elements.todoInput.query();
+        todoInput.nativeElement.value = 'Buy groceries';
+        todoInput.nativeElement.dispatchEvent(new Event('input'));
 
-    const addTodoSuccess = () =>
-      predefinedHttpCallInstructions.post.success(
-        'https://DOMAIN/api/todos',
-        newTodoResponse
-      );
+        harness.elements.addTodoButton.click();
 
-    // Act - Fill the form and submit
-    const todoInput = harness.elements.todoInput.query();
-    todoInput.nativeElement.value = 'Buy groceries';
-    todoInput.nativeElement.dispatchEvent(new Event('input'));
+        // Handle the HTTP request triggered by addTodo()
+        runTasksUntilStable(fixture, {httpCallInstructions: [addTodoSuccess]});
 
-    harness.elements.addTodoButton.click();
+        // Assert
+        expect(component.todos.length).toBe(1);
+        expect(component.todos[0].title).toBe('Buy groceries');
+        expect(component.newTodo).toBe(''); // Input should be cleared
 
-    // Handle the HTTP request triggered by addTodo()
-    runTasksUntilStable(fixture, { httpCallInstructions: [addTodoSuccess] });
+        // Verify the UI reflects the new todo
+        const todoItems = harness.elements.todoItem.queryAll();
+        expect(todoItems.length).toBe(1);
+        expect(harness.elements.todoTitle.getTextContent(todoItems[0])).toContain('Buy groceries');
+    }));
 
-    // Assert
-    expect(component.todos.length).toBe(1);
-    expect(component.todos[0].title).toBe('Buy groceries');
-    expect(component.newTodo).toBe(''); // Input should be cleared
+    it('should show validation error for empty todo', fakeAsync(() => {
+        // Act - Submit form with empty input
+        harness.elements.addTodoButton.click();
 
-    // Verify the UI reflects the new todo
-    const todoItems = harness.elements.todoItem.queryAll();
-    expect(todoItems.length).toBe(1);
-    expect(harness.elements.todoTitle.getTextContent(todoItems[0])).toContain('Buy groceries');
-  }));
+        // No HTTP request should be made, just run tasks to stabilize
+        runTasksUntilStable(fixture);
 
-  it('should show validation error for empty todo', fakeAsync(() => {
-    // Act - Submit form with empty input
-    harness.elements.addTodoButton.click();
+        // Assert
+        expect(component.errorMessage).toBe('Todo cannot be empty');
 
-    // No HTTP request should be made, just run tasks to stabilize
-    runTasksUntilStable(fixture);
+        // Verify the UI shows the error message
+        const errorMessage = harness.elements.errorMessage.query();
+        expect(errorMessage).toBeDefined();
+        expect(errorMessage.nativeElement.textContent).toContain('Todo cannot be empty');
+    }));
 
-    // Assert
-    expect(component.errorMessage).toBe('Todo cannot be empty');
+    it('should show error message when adding todo fails', fakeAsync(() => {
+        // Arrange
+        const addTodoError = () =>
+            predefinedHttpCallInstructions.post.error(
+                'https://DOMAIN/api/todos',
+                {message: 'Failed to add todo'}
+            );
 
-    // Verify the UI shows the error message
-    const errorMessage = harness.elements.errorMessage.query();
-    expect(errorMessage).toBeDefined();
-    expect(errorMessage.nativeElement.textContent).toContain('Todo cannot be empty');
-  }));
+        // Act - Fill the form and submit
+        const todoInput = harness.elements.todoInput.query();
+        todoInput.nativeElement.value = 'Buy groceries';
+        todoInput.nativeElement.dispatchEvent(new Event('input'));
 
-  it('should show error message when adding todo fails', fakeAsync(() => {
-    // Arrange
-    const addTodoError = () =>
-      predefinedHttpCallInstructions.post.error(
-        'https://DOMAIN/api/todos',
-        { message: 'Failed to add todo' }
-      );
+        harness.elements.addTodoButton.click();
 
-    // Act - Fill the form and submit
-    const todoInput = harness.elements.todoInput.query();
-    todoInput.nativeElement.value = 'Buy groceries';
-    todoInput.nativeElement.dispatchEvent(new Event('input'));
+        // Handle the HTTP request with an error
+        runTasksUntilStable(fixture, {httpCallInstructions: [addTodoError]});
 
-    harness.elements.addTodoButton.click();
+        // Assert
+        expect(component.errorMessage).toBe('Failed to add todo');
 
-    // Handle the HTTP request with an error
-    runTasksUntilStable(fixture, { httpCallInstructions: [addTodoError] });
-
-    // Assert
-    expect(component.errorMessage).toBe('Failed to add todo');
-
-    // Verify the UI shows the error message
-    const errorMessage = harness.elements.errorMessage.query();
-    expect(errorMessage).toBeDefined();
-    expect(errorMessage.nativeElement.textContent).toContain('Failed to add todo');
-  }));
+        // Verify the UI shows the error message
+        const errorMessage = harness.elements.errorMessage.query();
+        expect(errorMessage).toBeDefined();
+        expect(errorMessage.nativeElement.textContent).toContain('Failed to add todo');
+    }));
 });
 ```
 
@@ -427,7 +427,7 @@ describe('TodosComponent Deleting Todos', () => {
             );
 
         // Act - First render the component with the initial todos
-        fixture.detectChanges();
+        runTasksUntilStable(fixture);
 
         // Verify initial state
         let todoItems = harness.elements.todoItem.queryAll();
@@ -459,7 +459,7 @@ describe('TodosComponent Deleting Todos', () => {
             );
 
         // Act - First render the component with the initial todos
-        fixture.detectChanges();
+        runTasksUntilStable(fixture);
 
         // Click delete button on the first todo
         const deleteButtons = harness.elements.deleteTodoButton.queryAll();
