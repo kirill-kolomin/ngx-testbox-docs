@@ -18,433 +18,185 @@ Prerequisites for setting black-box integration tests up:
 2. You need to know the main elements on the page to set tests against them.
 3. Install ngx-testbox.
 
-## Testing CRUD Operations with ngx-testbox
+## Cook book
 
-In this tutorial, we'll demonstrate how to use ngx-testbox to test CRUD (Create, Read, Update, Delete) operations in a simple Todo application. We'll cover each operation separately, showing how to set up tests, define HTTP call instructions, and verify component behavior.
+Receipt of good test cases includes the next steps:
+1. Delve into your business domain. Investigate **Acceptance Criteria** of your user story, at least approximately.
+Each Acceptance Criteria is a test case, or several ones, that you will cover in code base.
+2. Set test ids up. If you have written template, apply them to elements.
+3. Make skeletons off of your test cases—write test suites (`describe`s) + test cases (`it`s).
+4. Generate the `Harness` class for your component that extends from `DebugElementHarness`.
+5. Implement one by one a test case using the [runTasksUntilStable](#runTasksUntilStable) function.
+6. In parallel, you need to prepare http call instructions (`HttpCallInstruction`).
+For that you need to communicate with your backend team to understand the API contract.
 
-### Setting up the Todo Application
-
-Before diving into testing, let's define a simple Todo application structure. Our application will have:
-
-1. A list of todos
-2. A form to add new todos
-3. Options to edit and delete todos
-
-Here's how we'll define our test IDs:
+`HttpCallInstruction` is a guideline for a corresponding HTTP request, how it should be resolved.
+It describes what http status code, body and headers to respond with.
+You may use predefined http call instructions (`predefinedHttpCallInstructions`), which serve as shortcuts for common cases.
+`predefinedHttpCallInstructions` contains following REST methods `head, options, get, post, put, patch, delete` in two statuses `success` (200) or `error` (500).
+Additionally, you can provide the body with such an instruction to return in the response.
+For complex use cases see the [Custom responses](#custom-responses) block.
 
 ```typescript
-import { TestIdDirective } from 'ngx-testbox';
+import {predefinedHttpCallInstructions} from 'ngx-testbox/testing';
+
+// Means that response on this request to delete the todo with id 2221 will fail.
+predefinedHttpCallInstructions.delete.error('https://DOMAIN/todos/2221')
+// Means that response on this request to get the todo with id 1123 will success with defined body.
+predefinedHttpCallInstructions.get.success('https://DOMAIN/todos/1123', () => ({
+    title: 'Buy fruits for tomorrow',
+    completed: 'true',
+}))
+```
+
+`DebugElementHarness` is a convenient way to interact with your elements.
+It gives you basic functionality in a declarative way to query, query all, click, focus and get text content.
+
+```typescript
+import {DebugElementHarness} from 'ngx-testbox/testing';
 
 export const testIds = [
-  'todoList',
-  'todoItem',
-  'todoForm',
-  'todoInput',
-  'addTodoButton',
-  'editTodoButton',
-  'deleteTodoButton',
-  'todoStatus',
-  'errorMessage'
+    'todoList',
+    'todoItem',
+    'todoForm',
+    'todoInput',
+    'addTodoButton',
+    'editTodoButton',
+    'deleteTodoButton',
+    'todoTitle',
+    'todoStatus',
+    'errorMessage'
+] as const;
+
+export class TodosHarness extends DebugElementHarness<typeof testIds> {
+    constructor(debugElement: DebugElement) {
+        super(debugElement, testIds);
+    }
+}
+
+const harness = new TodosHarness(fixture.debugElement);
+
+// A user adds a todo but later decides to not do it. This is an abstract example, your test implementation will be different.
+harness.todoInput.query().value = 'Read a book'
+harness.addTodoButton.click(); // <-- Adds a new item
+const todoItem = harness.todoItem.queryAll()
+    .find(todoItemDebugElement => harness.todoTitle.getTextContent(todoItemDebugElement) === 'Read a book'); // <-- Finds the debugElement of the recently added item
+harness.deleteTodoButton.click(todoItem) // <-- Deletes the item
+```
+
+#### Example with applying test ids
+
+```typescript
+import {TestIdDirective} from 'ngx-testbox';
+
+export const testIds = [
+    'todoList',
+    'todoItem',
+    'todoForm',
+    'todoInput',
+    'addTodoButton',
+    'editTodoButton',
+    'deleteTodoButton',
+    'todoTitle',
+    'todoStatus',
+    'errorMessage'
 ] as const;
 
 export const testIdMap = TestIdDirective.idsToMap(testIds);
 ```
 
-And here's a simplified component template:
+```typescript
+import {testIdMap} from './test-ids';
+import {TestIdDirective} from 'ngx-testbox';
+
+@Component({
+    imports: [TestIdDirective]
+})
+class TodosComponent {
+    testIds = testIdMap;
+}
+```
 
 ```html
-<div [testboxTestId]="testIdMap.todoList">
-  <div *ngFor="let todo of todos" [testboxTestId]="testIdMap.todoItem">
-    <span>{{ todo.title }}</span>
-    <span [testboxTestId]="testIdMap.todoStatus">{{ todo.completed ? 'Completed' : 'Active' }}</span>
-    <button [testboxTestId]="testIdMap.editTodoButton" (click)="editTodo(todo)">Edit</button>
-    <button [testboxTestId]="testIdMap.deleteTodoButton" (click)="deleteTodo(todo.id)">Delete</button>
+<div [testboxTestId]="testIds.todoList">
+  <div *ngFor="let todo of todos" [testboxTestId]="testIds.todoItem">
+    <span [testboxTestId]="testIds.todoTitle">{{ todo.title }}</span>
+    <span [testboxTestId]="testIds.todoStatus">{{ todo.completed ? 'Completed' : 'Active' }}</span>
+    <button [testboxTestId]="testIds.editTodoButton" (click)="editTodo(todo)">Edit</button>
+    <button [testboxTestId]="testIds.deleteTodoButton" (click)="deleteTodo(todo.id)">Delete</button>
   </div>
 </div>
 
-<form [testboxTestId]="testIdMap.todoForm" (ngSubmit)="addTodo()">
-  <input [testboxTestId]="testIdMap.todoInput" [(ngModel)]="newTodo" name="newTodo" />
-  <button [testboxTestId]="testIdMap.addTodoButton" type="submit">Add Todo</button>
+<form [testboxTestId]="testIds.todoForm" (ngSubmit)="addTodo()">
+  <input [testboxTestId]="testIds.todoInput" [(ngModel)]="newTodo" name="newTodo" />
+  <button [testboxTestId]="testIds.addTodoButton" type="submit">Add Todo</button>
 </form>
 
-<p *ngIf="errorMessage" [testboxTestId]="testIdMap.errorMessage">{{ errorMessage }}</p>
+<p *ngIf="errorMessage" [testboxTestId]="testIds.errorMessage">{{ errorMessage }}</p>
 ```
 
-### Create Operation (Adding a Todo)
+### Writing tests
 
-Let's start by testing the "Create" operation—adding a new todo item.
+It's time to write tests.
+Collect **Acceptance Criteria** and split them into test cases.
 
-#### Test Case: Successfully Adding a Todo
+The core functionality is hidden behind the `runTasksUntilStable` function.
+This is a loop of iterations over appearing asynchronous tasks to resolve them, while your component lifetime. 
+All tests are running within the fakeAsync zone, it gives us ultimate control over time passage, so we can test components step by step.
+The biggest advantage of using `runTasksUntilStable` is in that it takes full control over all technical aspects,
+so you need to focus on what matters for your features.
 
-```typescript
-import {
-  predefinedHttpCallInstructions,
-  runTasksUntilStable,
-  DebugElementHarness
-} from 'ngx-testbox/testing';
-import { fakeAsync } from '@angular/core/testing';
+The things are: 
+1. Runs change detection.
+2. Responds to HTTP requests.
+3. Pushes time forward. Executes until all asynchronous operations are resolved so that the fixture becomes stable.
 
-describe('TodoComponent - Create Operation', () => {
-  let fixture: ComponentFixture<TodoComponent>;
-  let component: TodoComponent;
-  let harness: DebugElementHarness;
+```html
+<input [(ngModel)]="filter" (ngModelChange)="filterTodos()">
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TodoComponent],
-      imports: [FormsModule, HttpClientModule]
-    });
+<div [testboxTestId]="testIds.todoList">
+  <div *ngFor="let todo of todos" [testboxTestId]="testIds.todoItem">
+    <span [testboxTestId]="testIds.todoTitle">{{ todo.title }}</span>
+    <span [testboxTestId]="testIds.todoStatus">{{ todo.completed ? 'Completed': 'Active' }}</span>
+    <button [testboxTestId]="testIds.editTodoButton" (click)="editTodo(todo)">Edit</button>
+    <button [testboxTestId]="testIds.deleteTodoButton" (click)="deleteTodo(todo.id)">Delete</button>
+  </div>
+</div>
 
-    fixture = TestBed.createComponent(TodoComponent);
-    component = fixture.componentInstance;
-    harness = new DebugElementHarness(fixture.debugElement, testIds);
-    fixture.detectChanges();
-  });
+<form [testboxTestId]="testIds.todoForm" (ngSubmit)="addTodo()">
+  <input [testboxTestId]="testIds.todoInput" [(ngModel)]="newTodo" name="newTodo" />
+  <button [testboxTestId]="testIds.addTodoButton" type="submit">Add Todo</button>
+</form>
 
-  it('should add a new todo when form is submitted', fakeAsync(() => {
-    // Arrange
-    const newTodoTitle = 'Buy groceries';
-    const newTodoResponse = { id: 1, title: newTodoTitle, completed: false };
-
-    const addTodoSuccess = () =>
-      predefinedHttpCallInstructions.post.success(
-        'https://api.example.com/todos',
-        newTodoResponse
-      );
-
-    // Act
-    const todoInput = harness.elements.todoInput.query();
-    todoInput.nativeElement.value = newTodoTitle;
-    todoInput.nativeElement.dispatchEvent(new Event('input'));
-
-    harness.elements.addTodoButton.click();
-    runTasksUntilStable(fixture, { httpCallInstructions: [addTodoSuccess] });
-
-    // Assert
-    const todoItems = harness.elements.todoItem.queryAll();
-    expect(todoItems.length).toBe(1);
-    expect(todoItems[0].nativeElement.textContent).toContain(newTodoTitle);
-  }));
-
-  it('should display error message when adding todo fails', fakeAsync(() => {
-    // Arrange
-    const newTodoTitle = 'Buy groceries';
-
-    const addTodoError = () =>
-      predefinedHttpCallInstructions.post.error(
-        'https://api.example.com/todos',
-        { message: 'Failed to add todo' }
-      );
-
-    // Act
-    const todoInput = harness.elements.todoInput.query();
-    todoInput.nativeElement.value = newTodoTitle;
-    todoInput.nativeElement.dispatchEvent(new Event('input'));
-
-    harness.elements.addTodoButton.click();
-    runTasksUntilStable(fixture, { httpCallInstructions: [addTodoError] });
-
-    // Assert
-    const errorMessage = harness.elements.errorMessage.query();
-    expect(errorMessage).toBeDefined();
-    expect(errorMessage.nativeElement.textContent).toContain('Failed to add todo');
-  }));
-});
+<p *ngIf="errorMessage" [testboxTestId]="testIds.errorMessage">{{ errorMessage }}</p>
 ```
 
-### Read Operation (Fetching Todos)
-
-Next, let's test the "Read" operation - fetching and displaying todos.
-
-#### Test Case: Successfully Loading Todos
-
 ```typescript
-describe('TodoComponent - Read Operation', () => {
-  let fixture: ComponentFixture<TodoComponent>;
-  let component: TodoComponent;
-  let harness: DebugElementHarness;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TodoComponent],
-      imports: [FormsModule, HttpClientModule]
-    });
-
-    fixture = TestBed.createComponent(TodoComponent);
-    component = fixture.componentInstance;
-    harness = new DebugElementHarness(fixture.debugElement, testIds);
-  });
-
-  it('should load and display todos on initialization', fakeAsync(() => {
-    // Arrange
-    const mockTodos = [
-      { id: 1, title: 'Learn Angular', completed: true },
-      { id: 2, title: 'Build an app', completed: false }
-    ];
-
-    const getTodosSuccess = () =>
-      predefinedHttpCallInstructions.get.success(
-        'https://api.example.com/todos',
-        mockTodos
-      );
-
-    // Act
-    runTasksUntilStable(fixture, { httpCallInstructions: [getTodosSuccess] });
-
-    // Assert
-    const todoItems = harness.elements.todoItem.queryAll();
-
-    expect(todoItems.length).toBe(2);
-    expect(todoItems[0].nativeElement.textContent).toContain('Learn Angular');
-    expect(todoItems[0].nativeElement.textContent).toContain('Completed');
-    expect(todoItems[1].nativeElement.textContent).toContain('Build an app');
-    expect(todoItems[1].nativeElement.textContent).toContain('Active');
-  }));
-
-  it('should display error message when loading todos fails', fakeAsync(() => {
-    // Arrange
-    const getTodosError = () =>
-      predefinedHttpCallInstructions.get.error(
-        'https://api.example.com/todos',
-        { message: 'Failed to load todos' }
-      );
-
-    // Act
-    runTasksUntilStable(fixture, { httpCallInstructions: [getTodosError] });
-
-    // Assert
-    const errorMessage = harness.elements.errorMessage.query();
-
-    expect(errorMessage).toBeDefined();
-    expect(errorMessage.nativeElement.textContent).toContain('Failed to load todos');
-  }));
-});
-```
-
-### Update Operation (Editing a Todo)
-
-Now, let's test the "Update" operation - editing an existing todo.
-
-#### Test Case: Successfully Updating a Todo
-
-```typescript
-describe('TodoComponent - Update Operation', () => {
-  let fixture: ComponentFixture<TodoComponent>;
-  let component: TodoComponent;
-  let harness: DebugElementHarness;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TodoComponent],
-      imports: [FormsModule, HttpClientModule]
-    });
-
-    fixture = TestBed.createComponent(TodoComponent);
-    component = fixture.componentInstance;
-    harness = new DebugElementHarness(fixture.debugElement, testIds);
-  });
-
-  it('should update a todo when edit button is clicked', fakeAsync(() => {
-    // Arrange
-    const mockTodos = [
-      { id: 1, title: 'Learn Angular', completed: false }
-    ];
-
-    const getTodosSuccess = () =>
-      predefinedHttpCallInstructions.get.success(
-        'https://api.example.com/todos',
-        mockTodos
-      );
-
-    const updatedTodo = { id: 1, title: 'Learn Angular Thoroughly', completed: true };
-
-    const updateTodoSuccess = () =>
-      predefinedHttpCallInstructions.put.success(
-        'https://api.example.com/todos/1',
-        updatedTodo
-      );
-
-    // Act - First load the todos
-    runTasksUntilStable(fixture, { httpCallInstructions: [getTodosSuccess] });
-
-    // Then edit the todo
-    harness.elements.editTodoButton.click();
-
-    // Simulate editing in a dialog or inline form
-    component.editingTodo = { ...mockTodos[0] };
-    component.editingTodo.title = 'Learn Angular Thoroughly';
-    component.editingTodo.completed = true;
-    component.saveEditedTodo();
-
-    runTasksUntilStable(fixture, { httpCallInstructions: [updateTodoSuccess] });
-
-    // Assert
-    const todoItems = harness.elements.todoItem.queryAll();
-    expect(todoItems.length).toBe(1);
-    expect(todoItems[0].nativeElement.textContent).toContain('Learn Angular Thoroughly');
-    expect(todoItems[0].nativeElement.textContent).toContain('Completed');
-  }));
-
-  it('should display error message when updating todo fails', fakeAsync(() => {
-    // Arrange
-    const mockTodos = [
-      { id: 1, title: 'Learn Angular', completed: false }
-    ];
-
-    const getTodosSuccess = () =>
-      predefinedHttpCallInstructions.get.success(
-        'https://api.example.com/todos',
-        mockTodos
-      );
-
-    const updateTodoError = () =>
-      predefinedHttpCallInstructions.put.error(
-        'https://api.example.com/todos/1',
-        { message: 'Failed to update todo' }
-      );
-
-    // Act - First load the todos
-    runTasksUntilStable(fixture, { httpCallInstructions: [getTodosSuccess] });
-
-    // Then try to edit the todo
-    harness.elements.editTodoButton.click();
-
-    // Simulate editing in a dialog or inline form
-    component.editingTodo = { ...mockTodos[0] };
-    component.editingTodo.title = 'Learn Angular Thoroughly';
-    component.saveEditedTodo();
-
-    runTasksUntilStable(fixture, { httpCallInstructions: [updateTodoError] });
-
-    // Assert
-    const errorMessage = harness.elements.errorMessage.query();
-    expect(errorMessage).toBeDefined();
-    expect(errorMessage.nativeElement.textContent).toContain('Failed to update todo');
-  }));
-});
-```
-
-### Delete Operation (Removing a Todo)
-
-Finally, let's test the "Delete" operation - removing a todo from the list.
-
-#### Test Case: Successfully Deleting a Todo
-
-```typescript
-describe('TodoComponent - Delete Operation', () => {
-  let fixture: ComponentFixture<TodoComponent>;
-  let component: TodoComponent;
-  let harness: DebugElementHarness;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TodoComponent],
-      imports: [FormsModule, HttpClientModule]
-    });
-
-    fixture = TestBed.createComponent(TodoComponent);
-    component = fixture.componentInstance;
-    harness = new DebugElementHarness(fixture.debugElement, testIds);
-  });
-
-  it('should delete a todo when delete button is clicked', fakeAsync(() => {
-    // Arrange
-    const mockTodos = [
-      { id: 1, title: 'Learn Angular', completed: false },
-      { id: 2, title: 'Build an app', completed: false }
-    ];
-
-    const getTodosSuccess = () =>
-      predefinedHttpCallInstructions.get.success(
-        'https://api.example.com/todos',
-        mockTodos
-      );
-
-    const deleteTodoSuccess = () =>
-      predefinedHttpCallInstructions.delete.success(
-        'https://api.example.com/todos/1'
-      );
-
-    // Act - First load the todos
-    runTasksUntilStable(fixture, { httpCallInstructions: [getTodosSuccess] });
-
-    // Then delete the first todo
-    const deleteButtons = harness.elements.deleteTodoButton.queryAll();
-    deleteButtons[0].nativeElement.click();
-
-    runTasksUntilStable(fixture, { httpCallInstructions: [deleteTodoSuccess] });
-
-    // Assert
-    const todoItems = harness.elements.todoItem.queryAll();
-    expect(todoItems.length).toBe(1);
-    expect(todoItems[0].nativeElement.textContent).toContain('Build an app');
-  }));
-
-  it('should display error message when deleting todo fails', fakeAsync(() => {
-    // Arrange
-    const mockTodos = [
-      { id: 1, title: 'Learn Angular', completed: false }
-    ];
-
-    const getTodosSuccess = () =>
-      predefinedHttpCallInstructions.get.success(
-        'https://api.example.com/todos',
-        mockTodos
-      );
-
-    const deleteTodoError = () =>
-      predefinedHttpCallInstructions.delete.error(
-        'https://api.example.com/todos/1',
-        { message: 'Failed to delete todo' }
-      );
-
-    // Act - First load the todos
-    runTasksUntilStable(fixture, { httpCallInstructions: [getTodosSuccess] });
-
-    // Then try to delete the todo
-    harness.elements.deleteTodoButton.click();
-
-    runTasksUntilStable(fixture, { httpCallInstructions: [deleteTodoError] });
-
-    // Assert
-    const errorMessage = harness.elements.errorMessage.query();
-    expect(errorMessage).toBeDefined();
-    expect(errorMessage.nativeElement.textContent).toContain('Failed to delete todo');
-
-    // The todo should still be in the list
-    const todoItems = harness.elements.todoItem.queryAll();
-    expect(todoItems.length).toBe(1);
-  }));
-});
-```
-
-## More cases
-
-### Smart components
-
-It is very likely that your application contains smart components too which are aware of their own state, their purpose is to manage the state.
-A widespread case when creating such a component, further logic should fetch its state from the server side at initial steps.
-
-```typescript
-
-@Component({
-    template: '<div *ngFor="let post of posts">{{post.message}}</div>',
-})
+@Component()
 export class MyComponent {
     posts = signal();
+    filter = '';
+    errorMessage = '';
+    newTodo = '';
 
     ngOnInit() {
-        this.http.get('https://DOMAIN/api/getPosts')
+        this.http.get(`https://DOMAIN/api/posts?title=${this.filter}`)
             .pipe(takeUntilDestroyed(this.destroyRef)) // <-- Never forgot to unsubscribe
-            .subscribe((posts) => {
-                this.posts.set(posts);
+            .subscribe({
+                next: (posts) => this.posts.set(posts),
+                error: (error) => this.errorMessage = error.message
             })
     }
+
+    addTodo(): void {
+        this.http.post('https://DOMAIN/api/posts', {title: this.newTodo})
+            .pipe(takeUntilDestroyed(this.destroyRef)) // <-- Never forgot to unsubscribe
+            .subscribe({
+                next: () => this.newTodo = '',
+                error: (error) => this.errorMessage = error.message
+            });
+    }
 }
-
-describe('MyComponent', () => {
-
-})
 ```
 
 ## Custom responses
