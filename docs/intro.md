@@ -71,7 +71,7 @@ describe('form group', () => {
     it('should display error in case of error in submit response', fakeAsync(async () => {
         const harness = new DebugElementHarness(fixture.debugElement, testIds);
         const accountNumberInput = harness.elements.accountNumber.query();
-        const submitErrorProneFormValue = () =>
+        const submitErrorProneFormValue = ( ) =>
             predefinedHttpCallInstructions.post.error('https://DOMAIN/api/submitForm');
 
         harness.elements.submitButton.click();
