@@ -147,8 +147,25 @@ completeHttpCalls([
 A utility class that provides a convenient API for interacting with elements in tests using test IDs.
 
 This class simplifies the process of querying for elements and performing common actions like clicking,
-focusing, and getting text content. It works with elements that have a test ID attribute, be default with ID attributes
-that applied by the TestIdDirective.
+focusing, and getting text content. It works with elements that have a test ID attribute, by default with ID attributes
+ that are applied by the TestIdDirective.
+
+**Type Parameters**:
+
+- `TestIds` - A readonly array of string literals representing the test IDs to be used
+
+**Properties**:
+
+- `elements` - A record of element APIs for each test ID, providing access to methods for each element identified by a
+  test ID
+
+**Constructor Parameters**:
+
+- `debugElement` - The root debug element to search within
+- `testIds` - An array of test IDs to create element APIs for
+- `testIdAttribute` - The attribute name used for test IDs (default: 'data-test-id')
+
+**Example:**
 
 ```typescript
 import {DebugElementHarness} from 'ngx-testbox/testing';
@@ -170,20 +187,55 @@ harness.elements.cancelButton.focus();
 const buttonText = harness.elements.submitButton.getTextContent();
 ```
 
-**Type Parameters**:
+### Methods
 
-- `TestIds` - A readonly array of string literals representing the test IDs to be used
+Each element has an interface with easy access to DOM
 
-**Properties**:
+#### query
 
-- `elements` - A record of element APIs for each test ID, providing access to methods for each element identified by a
-  test ID
+Queries for an element with the test ID.
 
-**Constructor Parameters**:
+**Parameters:**
 
-- `debugElement` - The root debug element to search within
-- `testIds` - An array of test IDs to create element APIs for
-- `testIdAttribute` - The attribute name used for test IDs (default: 'data-test-id')
+- `parentDebugElement` - Optional. Parent debug element to search within
+
+**Returns:** The found debug element `DebugElement`.
+
+#### queryAll
+
+Queries for all elements with the test ID.
+
+**Parameters:**
+
+- `parentDebugElement` - Optional. Parent debug element to search within
+
+**Returns:** An array of found debug elements.
+
+#### click
+
+Clicks the element.
+
+**Parameters:**
+
+- `parentDebugElement` - Optional. Parent debug element to search within
+
+#### focus
+
+Focuses the element.
+
+**Parameters:**
+
+- `parentDebugElement` - Optional. Parent debug element to search within
+
+#### getTextContent
+
+Gets the text content of the element.
+
+**Parameters:**
+
+- `parentDebugElement` - Optional. Parent debug element to search within
+
+**Returns:** The text content of the element.
 
 ## passTime
 
@@ -191,6 +243,12 @@ Advances the virtual clock by the specified amount of time and processes all mic
 
 This utility function is useful in Angular tests to simulate the passage of time
 for testing asynchronous operations like timeouts, intervals, and promises.
+
+**Parameters:**:
+
+- `time` - The amount of time in milliseconds to advance (defaults to 1000ms)
+
+**Example:**
 
 ```typescript
 import {passTime} from 'ngx-testbox/testing';
@@ -211,10 +269,6 @@ it('should update after timeout', fakeAsync(() => {
 }));
 ```
 
-**Parameters**:
-
-- `time` - The amount of time in milliseconds to advance (defaults to 1000ms)
-
 ## predefinedHttpCallInstructions
 
 A collection of predefined HTTP call instructions for different HTTP methods and status types.
@@ -222,6 +276,34 @@ A collection of predefined HTTP call instructions for different HTTP methods and
 This object provides a convenient way to create HTTP call instructions for testing without
 having to manually specify the status codes and response formats. It supports all common
 HTTP methods and both success and error responses.
+
+### Methods
+
+**Predefined HTTP Methods**:
+
+- HEAD
+- OPTIONS
+- GET
+- POST
+- PUT
+- PATCH
+- DELETE
+
+**Predefined Status Types**:
+
+- success (returns 200 OK)
+- error (returns 500 Internal Server Error)
+
+**Parameters:**
+
+Each method in the object is a function that takes next parameters:
+- `path` - EndpointPath
+- `responseGetter` - Is the responseGetter. It returns the body of the response.
+
+**Returns:** `HttpCallInstruction` but with one quirk.
+The `HttpCallInstruction` takes the value from your provided responseGetter as the response's body.
+
+**Example:**
 
 ```typescript
 import {predefinedHttpCallInstructions} from 'ngx-testbox/testing';
@@ -239,21 +321,6 @@ runTasksUntilStable(fixture, {httpCallInstructions: [getSuccess, postError]});
 // Or use with completeHttpCalls
 completeHttpCalls([getSuccess, postError]);
 ```
-
-**Supported HTTP Methods**:
-
-- HEAD
-- OPTIONS
-- GET
-- POST
-- PUT
-- PATCH
-- DELETE
-
-**Supported Status Types**:
-
-- success (returns 200 OK)
-- error (returns 500 Internal Server Error)
 
 ## TestIdDirective
 
