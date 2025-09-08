@@ -8,12 +8,24 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+
+  background: linear-gradient(90deg, #ed0100, #e449b4, #ae3bfc, #7f15fd);
+  animation: gradient-anim 6.5s linear infinite;
 }
 
 @media screen and (max-width: 996px) {
   .heroBanner {
     padding: 2rem;
   }
+}
+
+.background {
+  position: absolute;
+  opacity: 0.2;
+  height: 194%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
 }
 
 .buttons {

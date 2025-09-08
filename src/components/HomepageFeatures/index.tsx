@@ -5,7 +5,8 @@ import styles from './styles.module.css';
 
 type FeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<'svg'>>;
+  Svg?: React.ComponentType<React.ComponentProps<'svg'>>;
+  Img?: string;
   description: ReactNode;
 };
 
@@ -30,7 +31,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Powered by Angular',
-    Svg: require('@site/static/img/icon_angular.svg').default,
+    Img: require('@site/static/img/logo.png').default,
     description: (
       <>
           Ngx-testbox enhances your development experience in Angular apps.
@@ -39,11 +40,12 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({title, Svg, description}: FeatureItem) {
+function Feature({title, Svg, Img, description}: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+          {Svg && <Svg className={styles.featureSvg} role="img" />}
+          {Img && <img src={Img} className={styles.featureSvg} role="img" />}
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>
