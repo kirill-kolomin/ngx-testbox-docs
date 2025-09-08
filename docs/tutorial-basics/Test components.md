@@ -35,7 +35,6 @@ It describes what http status code, body and headers to respond with.
 You may use predefined http call instructions (`predefinedHttpCallInstructions`), which serve as shortcuts for common cases.
 `predefinedHttpCallInstructions` contains following REST methods `head, options, get, post, put, patch, delete` in two statuses `success` (200) or `error` (500).
 Additionally, you can provide the body with such an instruction to return in the response.
-For complex use cases see the [Custom responses](#custom-responses) block.
 
 ```typescript
 import {predefinedHttpCallInstructions} from 'ngx-testbox/testing';
@@ -49,40 +48,12 @@ predefinedHttpCallInstructions.get.success('https://DOMAIN/todos/1123', () => ({
 }))
 ```
 
-`DebugElementHarness` is a convenient way to interact with your elements.
-It gives you basic functionality in a declarative way to query, query all, click, focus and get text content.
+:::tip[Custom http call instructions]
 
-```typescript
-import {DebugElementHarness} from 'ngx-testbox/testing';
+For more complex cases you can define your custom http instructions.
+Basically, `HttpCallInstruction` is an interface that you can refer to, when define something specific.
 
-export const testIds = [
-    'todoList',
-    'todoItem',
-    'todoForm',
-    'todoInput',
-    'addTodoButton',
-    'editTodoButton',
-    'deleteTodoButton',
-    'todoTitle',
-    'todoStatus',
-    'errorMessage'
-] as const;
-
-export class TodosHarness extends DebugElementHarness<typeof testIds> {
-    constructor(debugElement: DebugElement) {
-        super(debugElement, testIds);
-    }
-}
-
-const harness = new TodosHarness(fixture.debugElement);
-
-// A user adds a todo but later decides to not do it. This is an abstract example, your test implementation will be different.
-harness.todoInput.query().value = 'Read a book'
-harness.addTodoButton.click(); // <-- Adds a new item
-const todoItem = harness.todoItem.queryAll()
-    .find(todoItemDebugElement => harness.todoTitle.getTextContent(todoItemDebugElement) === 'Read a book'); // <-- Finds the debugElement of the recently added item
-harness.deleteTodoButton.click(todoItem) // <-- Deletes the item
-```
+:::
 
 #### Example with applying test ids
 
@@ -135,21 +106,63 @@ class TodosComponent {
 <p *ngIf="errorMessage" [testboxTestId]="testIds.errorMessage">{{ errorMessage }}</p>
 ```
 
+#### DebugElementHarness
+
+`DebugElementHarness` is a convenient way to interact with your elements.
+Basically, this is a class that you can use as is, or create a wrapper sharpen for specific needs of your component that extends from that class.
+It gives you basic functionality in a declarative way to query, query all, click, focus and get text content.
+
+```typescript
+import {DebugElementHarness} from 'ngx-testbox/testing';
+
+const harness = new DebugElementHarness(fixture.debugElement, testIds);
+
+// A user adds a todo but later decides to not do it. This is an abstract example, your test implementation will be different.
+harness.todoInput.query().value = 'Read a book'
+harness.addTodoButton.click(); // <-- Adds a new item
+const todoItem = harness.todoItem.queryAll()
+    .find(todoItemDebugElement => harness.todoTitle.getTextContent(todoItemDebugElement) === 'Read a book'); // <-- Finds the debugElement of the recently added item
+harness.deleteTodoButton.click(todoItem) // <-- Deletes the item
+```
+
 ### Writing tests
 
 It's time to write tests.
 Collect **Acceptance Criteria** and split them into test cases.
 
 The core functionality is hidden behind the `runTasksUntilStable` function.
-This is a loop of iterations over appearing asynchronous tasks to resolve them, while your component lifetime. 
+This is a loop of iterations over appearing asynchronous tasks to resolve them, while your component lifetime.
 All tests are running within the fakeAsync zone, it gives us ultimate control over time passage, so we can test components step by step.
 The biggest advantage of using `runTasksUntilStable` is in that it takes full control over all technical aspects,
-so you need to focus on what matters for your features.
-
-The things are: 
+so you need to focus on what matters for your features. The things are:
 1. Runs change detection.
 2. Responds to HTTP requests.
 3. Pushes time forward. Executes until all asynchronous operations are resolved so that the fixture becomes stable.
+
+I recommend to test your components with black-box manner only.
+It means that you test UI behaviour based on provided inputs.
+
+:::tip[Test internal state]
+
+You can combine both approaches black and white box testing in components if you wish.
+But be careful; the more your tests know about code base internals, the harder it is to maintain such tests.
+
+:::
+
+:::tip[Unit testing]
+
+Unit tests ideally serve for white-box testing.
+It's a good approach to test internal state.
+But you don't need to use ngx-testbox for it.
+
+:::
+
+:::danger
+
+If you need to test a specific method results, don't test the method was ever called, instead try to test effects the method made.
+Otherwise you increase both tests and code base structure coupling, what leads to harder project's maintenance.
+
+:::
 
 ### Example 1: Testing Component Initialization
 
@@ -194,9 +207,6 @@ describe('TodosComponent Initialization', () => {
         // This will trigger ngOnInit and handle the HTTP request
         runTasksUntilStable(fixture, {httpCallInstructions: [getTodosSuccess]});
 
-        // Assert
-        expect(component.todos()).toEqual(mockTodos);
-
         // Verify the UI reflects the loaded data
         const todoItems = harness.elements.todoItem.queryAll();
         expect(todoItems.length).toBe(2);
@@ -216,9 +226,6 @@ describe('TodosComponent Initialization', () => {
 
         // Act
         runTasksUntilStable(fixture, {httpCallInstructions: [getTodosError]});
-
-        // Assert
-        expect(component.errorMessage).toBe('Failed to load todos');
 
         // Verify the UI shows the error message
         const errorMessage = harness.elements.errorMessage.query();
@@ -258,13 +265,13 @@ describe('TodosComponent Filtering', () => {
             {id: 2, title: 'Build an app', completed: true},
             {id: 3, title: 'Deploy Angular app', completed: false}
         ];
-        
+
         // This is where you may need your custom http call instruction, to make the filtration manually
         const getTodos: HttpCallInstruction = [['https://DOMAIN/api/todos', 'GET'], (_httpRequest, urlSearchParams) => {
             const searchString = urlSearchParams.get('title');
-            const body = allTodos.filter(({title}) => title.includes(searchString))
-            
-            return new HttpResponse({ body: mockBody, status: 200 })
+            const filteredTodos = allTodos.filter(({title}) => title.includes(searchString))
+
+            return new HttpResponse({ body: filteredTodos, status: 200 })
         }]
 
         // Load initial todos
@@ -301,6 +308,29 @@ describe('TodosComponent Adding Todos', () => {
     let fixture: ComponentFixture<TodosComponent>;
     let component: TodosComponent;
     let harness: DebugElementHarness<typeof testIds>;
+    // Using custom HTTP call instruction for validation
+    const addTodo: HttpCallInstruction = [['https://DOMAIN/api/todos', 'PUT'], (httpRequest) => {
+        // Parse the request body to validate it
+        const requestBody = JSON.parse(httpRequest.body);
+
+        // Validate that the title is a not empty string
+        if (!requestBody?.title || requestBody.title === '') {
+            return new HttpResponse({
+                status: 400,
+                body: { message: 'Todo cannot be empty' }
+            });
+        }
+
+        // Return success response with the new todo
+        return new HttpResponse({
+            status: 200,
+            body: {
+                id: 1, // in real life the id is dynamic
+                title: requestBody.title,
+                completed: false
+            }
+        });
+    }];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -318,14 +348,6 @@ describe('TodosComponent Adding Todos', () => {
 
     it('should add a new todo when form is submitted', fakeAsync(() => {
         // Arrange
-        const newTodoResponse = {id: 1, title: 'Buy groceries', completed: false};
-
-        const addTodoSuccess = () =>
-            predefinedHttpCallInstructions.post.success(
-                'https://DOMAIN/api/todos',
-                newTodoResponse
-            );
-
         // Act - Fill the form and submit
         const todoInput = harness.elements.todoInput.query();
         todoInput.nativeElement.value = 'Buy groceries';
@@ -333,13 +355,12 @@ describe('TodosComponent Adding Todos', () => {
 
         harness.elements.addTodoButton.click();
 
-        // Handle the HTTP request triggered by addTodo()
-        runTasksUntilStable(fixture, {httpCallInstructions: [addTodoSuccess]});
+        // Handle the HTTP request triggered by form submit
+        runTasksUntilStable(fixture, {httpCallInstructions: [addTodo]});
 
         // Assert
         expect(component.todos.length).toBe(1);
         expect(component.todos[0].title).toBe('Buy groceries');
-        expect(component.newTodo).toBe(''); // Input should be cleared
 
         // Verify the UI reflects the new todo
         const todoItems = harness.elements.todoItem.queryAll();
@@ -351,7 +372,6 @@ describe('TodosComponent Adding Todos', () => {
         // Act - Submit form with empty input
         harness.elements.addTodoButton.click();
 
-        // No HTTP request should be made, just run tasks to stabilize
         runTasksUntilStable(fixture);
 
         // Assert
@@ -362,369 +382,5 @@ describe('TodosComponent Adding Todos', () => {
         expect(errorMessage).toBeDefined();
         expect(errorMessage.nativeElement.textContent).toContain('Todo cannot be empty');
     }));
-
-    it('should show error message when adding todo fails', fakeAsync(() => {
-        // Arrange
-        const addTodoError = () =>
-            predefinedHttpCallInstructions.post.error(
-                'https://DOMAIN/api/todos',
-                {message: 'Failed to add todo'}
-            );
-
-        // Act - Fill the form and submit
-        const todoInput = harness.elements.todoInput.query();
-        todoInput.nativeElement.value = 'Buy groceries';
-        todoInput.nativeElement.dispatchEvent(new Event('input'));
-
-        harness.elements.addTodoButton.click();
-
-        // Handle the HTTP request with an error
-        runTasksUntilStable(fixture, {httpCallInstructions: [addTodoError]});
-
-        // Assert
-        expect(component.errorMessage).toBe('Failed to add todo');
-
-        // Verify the UI shows the error message
-        const errorMessage = harness.elements.errorMessage.query();
-        expect(errorMessage).toBeDefined();
-        expect(errorMessage.nativeElement.textContent).toContain('Failed to add todo');
-    }));
 });
 ```
-
-### Example 4: Testing Deleting a Todo
-
-This example shows how to test deleting a todo:
-
-```typescript
-describe('TodosComponent Deleting Todos', () => {
-    let fixture: ComponentFixture<TodosComponent>;
-    let component: TodosComponent;
-    let harness: DebugElementHarness<typeof testIds>;
-
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [TodosComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting()]
-        });
-
-        fixture = TestBed.createComponent(TodosComponent);
-        component = fixture.componentInstance;
-        harness = new DebugElementHarness(fixture.debugElement, testIds);
-
-        // Initialize with some todos
-        component.todos = [
-            {id: 1, title: 'Learn Angular', completed: false},
-            {id: 2, title: 'Build an app', completed: true}
-        ];
-    });
-
-    it('should delete a todo when delete button is clicked', fakeAsync(() => {
-        // Arrange
-        const deleteTodoSuccess = () =>
-            predefinedHttpCallInstructions.delete.success(
-                'https://DOMAIN/api/todos/1'
-            );
-
-        // Act - First render the component with the initial todos
-        runTasksUntilStable(fixture);
-
-        // Verify initial state
-        let todoItems = harness.elements.todoItem.queryAll();
-        expect(todoItems.length).toBe(2);
-
-        // Click delete button on the first todo
-        const deleteButtons = harness.elements.deleteTodoButton.queryAll();
-        deleteButtons[0].nativeElement.click();
-
-        // Handle the HTTP request triggered by deleteTodo()
-        runTasksUntilStable(fixture, {httpCallInstructions: [deleteTodoSuccess]});
-
-        // Assert
-        expect(component.todos.length).toBe(1);
-        expect(component.todos[0].title).toBe('Build an app');
-
-        // Verify the UI reflects the deletion
-        todoItems = harness.elements.todoItem.queryAll();
-        expect(todoItems.length).toBe(1);
-        expect(harness.elements.todoTitle.getTextContent(todoItems[0])).toContain('Build an app');
-    }));
-
-    it('should show error message when deleting todo fails', fakeAsync(() => {
-        // Arrange
-        const deleteTodoError = () =>
-            predefinedHttpCallInstructions.delete.error(
-                'https://DOMAIN/api/todos/1',
-                {message: 'Failed to delete todo'}
-            );
-
-        // Act - First render the component with the initial todos
-        runTasksUntilStable(fixture);
-
-        // Click delete button on the first todo
-        const deleteButtons = harness.elements.deleteTodoButton.queryAll();
-        deleteButtons[0].nativeElement.click();
-
-        // Handle the HTTP request with an error
-        runTasksUntilStable(fixture, {httpCallInstructions: [deleteTodoError]});
-
-        // Assert
-        expect(component.errorMessage).toBe('Failed to delete todo');
-        expect(component.todos.length).toBe(2); // Todo should not be removed
-
-        // Verify the UI shows the error message
-        const errorMessage = harness.elements.errorMessage.query();
-        expect(errorMessage).toBeDefined();
-        expect(errorMessage.nativeElement.textContent).toContain('Failed to delete todo');
-    }));
-});
-```
-
-These examples demonstrate how to use `runTasksUntilStable` to test various aspects of the Todo component, including initialization, filtering, adding, and deleting todos. Each example follows the Arrange-Act-Assert pattern and shows how to handle both success and error scenarios.
-
-## Custom responses
-
-Sometimes you need to return different responses based on the request payload or URL parameters. Ngx-testbox provides a flexible way to define custom responses for your HTTP requests, allowing you to simulate various server behaviors in your tests.
-
-### Basic Custom Response
-
-You can create custom responses by defining a function that evaluates the request and returns an appropriate response:
-
-```typescript
-describe('TodoComponent - Custom Responses', () => {
-    it('should handle custom responses based on request payload', fakeAsync(() => {
-        // Arrange
-        const customResponseHandler = (request) => {
-            // Check the request body
-            const requestBody = JSON.parse(request.body);
-
-            if (requestBody.priority === 'high') {
-                // Return a specific response for high priority todos
-                return {
-                    id: 999,
-                    title: requestBody.title,
-                    completed: false,
-                    priority: 'high',
-                    dueDate: '2023-12-31'
-                }
-            } else {
-                // Return a standard response for normal todos
-                return {
-                    status: 200,
-                    body: {
-                        id: 1000,
-                        title: requestBody.title,
-                        completed: false
-                    }
-                };
-            }
-        };
-
-        const addTodoCustomResponse = () =>
-            predefinedHttpCallInstructions.post.custom(
-                'https://api.example.com/todos',
-                customResponseHandler
-            );
-
-        // Act - Add a high priority todo
-        const todoInput = harness.elements.todoInput.query();
-        todoInput.nativeElement.value = 'Urgent task';
-        todoInput.nativeElement.dispatchEvent(new Event('input'));
-
-        // Set priority in the component (assuming there's a priority selector)
-        component.newTodoPriority = 'high';
-
-        harness.elements.addTodoButton.click();
-        runTasksUntilStable(fixture, {httpCallInstructions: [addTodoCustomResponse]});
-
-        // Assert
-        const todoItems = harness.elements.todoItem.queryAll();
-        expect(todoItems.length).toBe(1);
-        expect(todoItems[0].nativeElement.textContent).toContain('Urgent task');
-        expect(todoItems[0].nativeElement.textContent).toContain('high');
-    }));
-});
-```
-
-### URL Parameter Based Responses
-
-You can also create responses based on URL parameters or path segments:
-
-```typescript
-it('should handle custom responses based on URL parameters', fakeAsync(() => {
-  // Arrange
-  const customResponseHandler = (request) => {
-    // Extract todo ID from URL
-    const urlParts = request.url.split('/');
-    const todoId = urlParts[urlParts.length - 1];
-
-    if (todoId === '1') {
-      return {
-        status: 200,
-        body: { 
-          id: 1,
-          title: 'First todo',
-          completed: true
-        }
-      };
-    } else if (todoId === '2') {
-      return {
-        status: 200,
-        body: { 
-          id: 2,
-          title: 'Second todo',
-          completed: false
-        }
-      };
-    } else {
-      return {
-        status: 404,
-        body: { 
-          message: 'Todo not found'
-        }
-      };
-    }
-  };
-
-  const getTodoCustomResponse = () =>
-    predefinedHttpCallInstructions.get.custom(
-      'https://api.example.com/todos/1',
-      customResponseHandler
-    );
-
-  // Act
-  runTasksUntilStable(fixture, { httpCallInstructions: [getTodoCustomResponse] });
-
-  // Assert
-  const todoDetail = harness.elements.todoDetail.query();
-  expect(todoDetail.nativeElement.textContent).toContain('First todo');
-  expect(todoDetail.nativeElement.textContent).toContain('Completed');
-}));
-```
-
-### Simulating Network Conditions
-
-Custom responses can also be used to simulate different network conditions:
-
-```typescript
-it('should handle slow network responses', fakeAsync(() => {
-  // Arrange
-  const slowNetworkResponse = (request) => {
-    // Simulate a delay of 2 seconds
-    tick(2000);
-
-    return {
-      status: 200,
-      body: [
-        { id: 1, title: 'Learn Angular', completed: false },
-        { id: 2, title: 'Master ngx-testbox', completed: false }
-      ]
-    };
-  };
-
-  const getTodosSlowResponse = () =>
-    predefinedHttpCallInstructions.get.custom(
-      'https://api.example.com/todos',
-      slowNetworkResponse
-    );
-
-  // Act
-  // First check that loading indicator is shown
-  runTasksUntilStable(fixture, { runUntilStableOptions: { ignoreHttpRequests: true } });
-
-  const loadingIndicator = harness.elements.loadingIndicator.query();
-  expect(loadingIndicator).toBeDefined();
-
-  // Then complete the request
-  runTasksUntilStable(fixture, { httpCallInstructions: [getTodosSlowResponse] });
-
-  // Assert
-  const todoItems = harness.elements.todoItem.queryAll();
-  expect(todoItems.length).toBe(2);
-
-  // Loading indicator should be gone
-  const loadingIndicatorAfter = harness.elements.loadingIndicator.query();
-  expect(loadingIndicatorAfter).toBeUndefined();
-}));
-```
-
-### Handling Multiple Requests
-
-You can also handle sequences of requests with different custom responses:
-
-```typescript
-it('should handle a sequence of requests with pagination', fakeAsync(() => {
-  // Arrange
-  const page1Response = (request) => {
-    const url = new URL(request.url);
-    const page = url.searchParams.get('page');
-
-    if (page === '1') {
-      return {
-        status: 200,
-        body: {
-          items: [
-            { id: 1, title: 'First todo', completed: false },
-            { id: 2, title: 'Second todo', completed: true }
-          ],
-          pagination: {
-            currentPage: 1,
-            totalPages: 2,
-            hasMore: true
-          }
-        }
-      };
-    }
-  };
-
-  const page2Response = (request) => {
-    const url = new URL(request.url);
-    const page = url.searchParams.get('page');
-
-    if (page === '2') {
-      return {
-        status: 200,
-        body: {
-          items: [
-            { id: 3, title: 'Third todo', completed: false }
-          ],
-          pagination: {
-            currentPage: 2,
-            totalPages: 2,
-            hasMore: false
-          }
-        }
-      };
-    }
-  };
-
-  const getPage1 = () =>
-    predefinedHttpCallInstructions.get.custom(
-      'https://api.example.com/todos?page=1',
-      page1Response
-    );
-
-  const getPage2 = () =>
-    predefinedHttpCallInstructions.get.custom(
-      'https://api.example.com/todos?page=2',
-      page2Response
-    );
-
-  // Act - Load first page
-  runTasksUntilStable(fixture, { httpCallInstructions: [getPage1] });
-
-  // Assert first page
-  let todoItems = harness.elements.todoItem.queryAll();
-  expect(todoItems.length).toBe(2);
-
-  // Act - Load next page
-  harness.elements.nextPageButton.click();
-  runTasksUntilStable(fixture, { httpCallInstructions: [getPage2] });
-
-  // Assert both pages loaded
-  todoItems = harness.elements.todoItem.queryAll();
-  expect(todoItems.length).toBe(3);
-}));
-```
-
-Custom responses give you the flexibility to test complex scenarios and edge cases in your application, ensuring that your components handle various server responses correctly.
