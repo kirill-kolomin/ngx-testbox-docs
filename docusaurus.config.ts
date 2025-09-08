@@ -18,11 +18,11 @@ const config: Config = {
   url: 'https://kirill-kolomin.github.io/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/ngx-testbox/',
+  baseUrl: '/ngx-testbox-docs/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  projectName: 'ngx-testbox', // Usually your repo name.
+  projectName: 'ngx-testbox-docs', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
