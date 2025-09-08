@@ -27,6 +27,8 @@ npm install ngx-testbox
 
 ### Define test ids
 
+The following example uses the [`TestIdDirective`](tutorial-basics/API%20definition.md#testiddirective) to create test IDs for your components.
+
 ```typescript
 import {TestIdDirective} from 'ngx-testbox';
 
@@ -39,12 +41,17 @@ export const testIdMap = TestIdDirective.idsToMap(testIds);
 ```html
 <form [formGroup]="formGroup">
     <button [testboxTestId]="testIdMap.submitButton" (click)="submit()">Submit</button>
-    
+
     <p *ngIf="errorFromServer" [testboxTestId]="testIdMap.formError">Error from server: {{errorFromServer}}</p>
 </form>
 ```
 
 ### Write your first test case. Let's cover the error path of the component
+
+The following example uses several key APIs from ngx-testbox:
+- [`DebugElementHarness`](tutorial-basics/API%20definition.md#debugelementharness) - A utility class for interacting with elements in tests
+- [`predefinedHttpCallInstructions`](tutorial-basics/API%20definition.md#predefinedhttpcallinstructions) - Shortcuts for common HTTP call instructions
+- [`runTasksUntilStable`](tutorial-basics/API%20definition.md#runtasksuntilstable) - A function that runs Angular change detection and processes tasks until the component fixture is stable
 
 ```typescript
 import {
@@ -57,16 +64,16 @@ describe('form group', () => {
     it('should hide error initially', () => {
         const harness = new DebugElementHarness(fixture.debugElement, testIds);
         const errorElement = harness.elements.formError.query();
-        
+
         expect(errorElement).not.toBeDefined();
     })
-    
+
     it('should display error in case of error in submit response', fakeAsync(async () => {
         const harness = new DebugElementHarness(fixture.debugElement, testIds);
         const accountNumberInput = harness.elements.accountNumber.query();
         const submitErrorProneFormValue = () =>
             predefinedHttpCallInstructions.post.error('https://DOMAIN/api/submitForm');
-        
+
         harness.elements.submitButton.click();
         runTasksUntilStable(fixture, {httpCallInstructions: [submitErrorProneFormValue]});
 

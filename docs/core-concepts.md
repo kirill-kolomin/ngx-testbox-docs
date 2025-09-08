@@ -11,7 +11,7 @@ sidebar_position: 2
 With ngx-testbox, you stay in full control of asynchronous operations.  
 Every unexpected request or task is surfaced immediately, so nothing slips through unnoticed.
 
-At the same time, the library provides convenient utilities to enhance your development experience, such as predefined http call instructions and convenient harnesses for DOM interaction.
+At the same time, the library provides convenient utilities to enhance your development experience, such as [predefined http call instructions](tutorial-basics/API%20definition.md#predefinedhttpcallinstructions) and convenient [harnesses for DOM interaction](tutorial-basics/API%20definition.md#debugelementharness).
 
 ## Focus on features, not on code
 
@@ -39,7 +39,7 @@ This means:
 - No unexpected changes occur during test execution.
 
 In complex apps, one request may trigger several more.  
-Ngx-testbox takes full control over async operations in the Zone, including HTTP, based on your defined HTTP call instructions at each step.  
+Ngx-testbox takes full control over async operations in the Zone, including HTTP, based on your defined [HTTP call instructions](tutorial-basics/API%20definition.md#httpcallinstruction) at each step.
 This gives you deterministic, stable test runs every time.
 
 ## Test-Driven Development

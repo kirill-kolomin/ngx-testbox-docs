@@ -25,22 +25,22 @@ Recipe for good test cases includes the next steps:
 Each Acceptance Criteria is a test case, or several ones, that you will cover in codebase.
 2. Set test ids up. If you have written template, apply them to elements.
 3. Create skeletons for your test cases—write test suites (`describe`s) + test cases (`it`s).
-4. Generate the `Harness` class for your component that extends from `DebugElementHarness`.
-5. Implement one by one a test case using the [runTasksUntilStable](#runTasksUntilStable) function.
-6. In parallel, you need to prepare HTTP call instructions (`HttpCallInstruction`).
+4. Generate the `Harness` class for your component that extends from [`DebugElementHarness`](API%20definition.md#debugelementharness).
+5. Implement one by one a test case using the [runTasksUntilStable](API%20definition.md#runtasksuntilstable) function.
+6. In parallel, you need to prepare HTTP call instructions ([`HttpCallInstruction`](API%20definition.md#httpcallinstruction)).
 For that you need to communicate with your backend team to understand the API contract.
 
 ### Test Ids
 
 One of the main benefits ngx-testbox brings is the simplicity of working with DOM elements.
 Define a type array with strings using `as const`, generate a map out of it.
-Use the map within template with `TestIdDirective`, and paste the array as an argument to `DebugElementHarness`.
-Though you have declarative typed API for access to elements from `DebugElementHarness`.
-`TestIdDirective` is an attribute directive that adds attribute `data-test-id` with the value provided as an argument.
+Use the map within template with [`TestIdDirective`](API%20definition.md#testiddirective), and paste the array as an argument to [`DebugElementHarness`](API%20definition.md#debugelementharness).
+Though you have declarative typed API for access to elements from [`DebugElementHarness`](API%20definition.md#debugelementharness).
+[`TestIdDirective`](API%20definition.md#testiddirective) is an attribute directive that adds attribute `data-test-id` with the value provided as an argument.
 
 :::note
 
-`TestIdDirective` and `DebugElementHarness` work in conjunction, but this is not necessary to use them at all.
+[`TestIdDirective`](API%20definition.md#testiddirective) and [`DebugElementHarness`](API%20definition.md#debugelementharness) work in conjunction, but this is not necessary to use them at all.
 They are optional for this black-box integration testing approach.
 They are just util functionality.
 
@@ -48,14 +48,14 @@ They are just util functionality.
 
 :::info
 
-You can avoid usage of `TestIdDirective`, if you have your own directive to work with test attributes.
-If you wish to continue working with `DebugElementHarness`, you need to pass your existing tests' attribute name as an argument to `DebugElementHarness`. 
+You can avoid usage of [`TestIdDirective`](API%20definition.md#testiddirective), if you have your own directive to work with test attributes.
+If you wish to continue working with [`DebugElementHarness`](API%20definition.md#debugelementharness), you need to pass your existing tests' attribute name as an argument to [`DebugElementHarness`](API%20definition.md#debugelementharness).
 
 :::
 
 #### DebugElementHarness
 
-`DebugElementHarness` is a convenient way to interact with your elements.
+[`DebugElementHarness`](API%20definition.md#debugelementharness) is a convenient way to interact with your elements.
 Basically, this is a class that you can use as is, or create a wrapper sharpen for specific needs of your component that extends from that class.
 It gives you basic functionality in a declarative way to query, query all, click, focus and get text content.
 
@@ -125,10 +125,10 @@ harness.deleteTodoButton.click(todoItem) // <-- Deletes the item
 
 ### Handling HTTP requests
 
-`HttpCallInstruction` is a guideline for a corresponding HTTP request, how it should be resolved.
+[`HttpCallInstruction`](API%20definition.md#httpcallinstruction) is a guideline for a corresponding HTTP request, how it should be resolved.
 It describes what HTTP status code, body and headers to respond with.
-You may use predefined HTTP call instructions (`predefinedHttpCallInstructions`), which serve as shortcuts for common cases.
-`predefinedHttpCallInstructions` contains following REST methods `head, options, get, post, put, patch, delete` in two statuses `success` (200) or `error` (500).
+You may use predefined HTTP call instructions ([`predefinedHttpCallInstructions`](API%20definition.md#predefinedhttpcallinstructions)), which serve as shortcuts for common cases.
+[`predefinedHttpCallInstructions`](API%20definition.md#predefinedhttpcallinstructions) contains following REST methods `head, options, get, post, put, patch, delete` in two statuses `success` (200) or `error` (500).
 Additionally, you can provide the body with such an instruction to return in the response.
 
 ```typescript
@@ -155,10 +155,10 @@ Basically, `HttpCallInstruction` is an interface that you can refer to, when def
 It's time to write tests.
 Collect **Acceptance Criteria** and split them into test cases.
 
-The core functionality is hidden behind the `runTasksUntilStable` function.
+The core functionality is hidden behind the [`runTasksUntilStable`](API%20definition.md#runtasksuntilstable) function.
 It continuously resolves asynchronous tasks that appear during your component’s lifecycle.
 All tests are running within the fakeAsync zone, it gives us ultimate control over time passage, so we can test components step by step.
-The biggest advantage of using `runTasksUntilStable` is in that it takes full control over all technical aspects,
+The biggest advantage of using [`runTasksUntilStable`](API%20definition.md#runtasksuntilstable) is in that it takes full control over all technical aspects,
 so you need to focus on what matters for your features. The things are:
 1. Runs change detection.
 2. Responds to HTTP requests.
