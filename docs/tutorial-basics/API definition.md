@@ -79,9 +79,11 @@ export type HttpCallInstruction = [HttpCallChecker, ResponseGetter]
 Runs Angular change detection and processes tasks until the component fixture is stable.
 This function is designed to help with testing asynchronous operations in Angular components.
 
-The function repeatedly runs change detection and advances the virtual clock until the fixture
-is stable. It also handles HTTP requests if instructions are provided. If the fixture cannot
-be stabilized after a maximum number of attempts, an error is thrown.
+It does the following operations:
+1. Runs change detection.
+2. Responds to HTTP requests.
+3. Pushes time forward. Executes until all asynchronous operations are resolved so that the fixture becomes stable.
+4. Runs the cycle again.
 
 **Parameters:**
 
@@ -187,7 +189,7 @@ A utility class that provides a convenient API for interacting with elements in 
 
 This class simplifies the process of querying for elements and performing common actions like clicking,
 focusing, and getting text content. It works with elements that have a test ID attribute, by default with ID attributes
- that are applied by the TestIdDirective.
+that are applied by the TestIdDirective.
 
 **Type Parameters**:
 
@@ -336,6 +338,7 @@ HTTP methods and both success and error responses.
 **Parameters:**
 
 Each method in the object is a function that takes next parameters:
+
 - `path` - EndpointPath
 - `responseGetter` - Is the responseGetter. It returns the body of the response.
 
@@ -375,12 +378,14 @@ framework such as Cypress, Jasmine, Jest, etc.
 **Example:**
 
 ```html
+
 <div testboxTestId="user-profile">User Profile</div>
 ```
 
 Renders as:
 
 ```html
+
 <button testboxTestId="submit-button">Submit</button>
 <!-- Renders as: <button data-test-id="submit-button">Submit</button> -->
 ```
@@ -411,9 +416,9 @@ const testIdsMap = TestIdDirective.idsToMap(['submit-button', 'cancel-button', '
 
 // Can be used in a component:
 @Component({
-  template: `<button [testboxTestId]="testIds['submit-button']">Submit</button>`
+    template: `<button [testboxTestId]="testIds['submit-button']">Submit</button>`
 })
 class MyComponent {
-  testIds = testIdsMap;
+    testIds = testIdsMap;
 }
 ```
