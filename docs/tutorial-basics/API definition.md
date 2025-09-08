@@ -4,40 +4,75 @@ sidebar_position: 2
 
 # API definition
 
-/**
-* Represents an HTTP method (GET, POST, PUT, DELETE, etc.).
-  */
-  export type HttpMethod = string;
+## HttpMethod
 
-/**
-* Represents an endpoint path that can be either a string or a regular expression.
-* - String: Exact or partial match for the URL
-* - RegExp: Pattern match for the URL
-    */
-    export type EndpointPath = string | RegExp;
+Represents an HTTP method (GET, POST, PUT, DELETE, etc.).
 
-/**
-* A function that generates an HTTP response based on the request and URL search parameters.
-*
-* @param httpRequest - The original HTTP request
-* @param searchParams - The parsed URL search parameters from the request
-* @returns An HTTP response object to be returned for the request
-  */
-  export type ResponseGetter = (httpRequest: HttpRequest<unknown>, searchParams: URLSearchParams) => HttpResponse<unknown>;
+**Example:**
 
-/**
-* A checker that determines if a specific HTTP request matches with a provided http call instruction for further handling.
-* Can be either:
-* - A function that takes an HTTP request and returns a boolean
-* - A tuple containing an endpoint path and HTTP method
-    */
-    export type HttpCallChecker = ((httpRequest: HttpRequest<unknown>) => boolean) | [EndpointPath, HttpMethod];
+```typescript
+export type HttpMethod = string;
+```
 
-/**
-* A tuple containing an HTTP call checker and a response getter function.
-* Used to define how to handle specific HTTP requests during testing.
-  */
-  export type HttpCallInstruction = [HttpCallChecker, ResponseGetter]
+## EndpointPath
+
+Represents an endpoint path that can be either a string or a regular expression.
+
+- String: Exact or partial match for the URL
+- RegExp: Pattern match for the URL
+
+**Example:**
+
+```typescript
+export type EndpointPath = string | RegExp;
+```
+
+## ResponseGetter
+
+A function that generates an HTTP response based on the request and URL search parameters.
+
+**Parameters:**
+
+- `httpRequest` - The original HTTP request
+- `searchParams` - The parsed URL search parameters from the request
+
+**Returns:** An HTTP response object to be returned for the request
+
+**Example:**
+
+```typescript
+export type ResponseGetter = (
+    httpRequest: HttpRequest<unknown>,
+    searchParams: URLSearchParams
+) => HttpResponse<unknown>;
+```
+
+## HttpCallChecker
+
+A checker that determines if a specific HTTP request matches with a provided http call instruction for further handling.
+Can be either:
+
+- A function that takes an HTTP request and returns a boolean
+- A tuple containing an endpoint path and HTTP method
+
+**Example:**
+
+```typescript
+export type HttpCallChecker =
+    ((httpRequest: HttpRequest<unknown>) => boolean) |
+    [EndpointPath, HttpMethod];
+```
+
+## HttpCallInstruction
+
+A tuple containing an HTTP call checker and a response getter function.
+Used to define how to handle specific HTTP requests during testing.
+
+**Example:**
+
+```typescript
+export type HttpCallInstruction = [HttpCallChecker, ResponseGetter]
+```
 
 ## runTasksUntilStable
 
@@ -48,7 +83,7 @@ The function repeatedly runs change detection and advances the virtual clock unt
 is stable. It also handles HTTP requests if instructions are provided. If the fixture cannot
 be stabilized after a maximum number of attempts, an error is thrown.
 
-**Parameters**
+**Parameters:**
 
 - `fixture` - The component fixture to stabilize
 - `params.iterationMs = 1000` - Optional. The amount of time in milliseconds to advance the virtual clock in each
@@ -84,6 +119,8 @@ be stabilized after a maximum number of attempts, an error is thrown.
   easier find the place where setInterval is invoked.
 
 :::
+
+**Example:**
 
 ```typescript
 import {runTasksUntilStable} from 'ngx-testbox/testing';
@@ -122,6 +159,8 @@ This function only handles HTTP requests that were scheduled using the Angular H
 For each request in the queue, it finds a matching instruction from the provided array
 and uses it to generate and flush an appropriate response.
 
+**Example:**
+
 ```typescript
 import {completeHttpCalls} from 'ngx-testbox/testing';
 import {HttpResponse} from '@angular/common/http';
@@ -132,7 +171,7 @@ completeHttpCalls([
 ]);
 ```
 
-**Parameters**:
+**Parameters:**:
 
 - `httpCallInstructions` - An array of instructions defining how to handle specific HTTP requests
 - `options` (optional) - Configuration options
