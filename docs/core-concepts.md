@@ -22,6 +22,12 @@ This makes test cases larger, harder to maintain, and less readable.
 Instead of worrying about internals, you focus only on features and expected outcomes.  
 The result: smaller, clearer, and more reliable tests.
 
+## UX-centric approach
+
+Ngx-testbox helps you ensure that your components behave correctly from the user's perspective.
+It’s not enough for an internal `loading` flag to be `false` if the spinner is still rolling on the screen.
+You test what users will see on the screen, what they will experience, which is what ultimately matters most in your application.
+
 ## What makes it work
 
 Angular provides a unique advantage: it tracks all asynchronous operations within the Angular Zone.  
