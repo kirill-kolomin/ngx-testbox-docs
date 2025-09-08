@@ -255,7 +255,59 @@ completeHttpCalls([getSuccess, postError]);
 - success (returns 200 OK)
 - error (returns 500 Internal Server Error)
 
-## Future Development Ideas
+## TestIdDirective
 
-- Integrate HTTP calls flushing with GraphQL and websockets
-- Integrate with all Angular versions
+A unified way of marking your elements on screen with a unique identifier for testing purposes.
+This Angular attribute directive defines a consistent approach for adding test identifiers to DOM elements.
+It sets the 'data-test-id' attribute on a DOM node, which can then be accessed by any testing
+framework such as Cypress, Jasmine, Jest, etc.
+
+**Inputs**
+
+- `testboxTestId` - The value to be assigned to the data-test-id attribute.
+
+**Example:**
+
+```html
+<div testboxTestId="user-profile">User Profile</div>
+```
+
+Renders as:
+
+```html
+<button testboxTestId="submit-button">Submit</button>
+<!-- Renders as: <button data-test-id="submit-button">Submit</button> -->
+```
+
+### Methods
+
+#### idsToMap
+
+Utility method that converts an array of test IDs into a map where both keys and values are the test IDs.
+This is useful for creating a type-safe object of test IDs that can be used in components and tests.
+
+**Type Parameters:**
+
+- `T` - Type parameter extending string for the test IDs
+
+**Parameters:**
+
+- `testIds` - Array of test ID strings (readonly T[])
+
+**Returns:** An object where keys and values are the test IDs
+
+**Example:**
+
+```typescript
+const testIds = ['submit-button', 'cancel-button', 'user-name'] as const;
+const testIdsMap = TestIdDirective.idsToMap(['submit-button', 'cancel-button', 'user-name']);
+// Results in: { 'submit-button': 'submit-button', 'cancel-button': 'cancel-button', 'user-name': 'user-name' }
+
+// Can be used in a component:
+@Component({
+  template: `<button [testboxTestId]="testIds['submit-button']">Submit</button>`
+})
+class MyComponent {
+  testIds = testIdsMap;
+}
+```
