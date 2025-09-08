@@ -75,8 +75,7 @@ const config: Config = {
       title: 'Ngx-Testbox',
       logo: {
         alt: 'Ngx-Testbox Logo',
-        src: 'img/logo.svg',
-        srcDark: 'img/icon_angular_wht.svg',
+        src: 'img/logo.png',
       },
       items: [
         {
