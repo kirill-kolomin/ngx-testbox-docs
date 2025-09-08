@@ -163,6 +163,7 @@ so you need to focus on what matters for your features. The things are:
 1. Runs change detection.
 2. Responds to HTTP requests.
 3. Pushes time forward. Executes until all asynchronous operations are resolved so that the fixture becomes stable.
+4. Runs the cycle again.
 
 I recommend testing your components with black-box style only.
 It means that you test UI behaviour based on provided inputs.
