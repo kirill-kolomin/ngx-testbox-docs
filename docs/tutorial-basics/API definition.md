@@ -178,6 +178,7 @@ completeHttpCalls([
 - `httpCallInstructions` - An array of instructions defining how to handle specific HTTP requests
 - `options` (optional) - Configuration options
     - `httpTestingController` - The HTTP testing controller instance (defaults to the one from TestBed)
+    - `testRequests` - The HTTP requests to be handled. If not provided, it will use the queue from the testing controller.
 
 **Throws**:
 
