@@ -102,7 +102,7 @@ const customInstruction: HttpCallInstruction = [
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `httpCallInstructions` | `HttpCallInstruction[]` | `[]` | Instructions for matching and responding to HTTP requests. |
-| `stabilizationTimeAdvance` | `number` | **0** | Time in ms to advance the virtual clock at the end of each satabilization attempt. |
+| `stabilizationTimeAdvance` | `number` | **0** | Time in ms to advance the virtual clock on each stabilization attempt. This is cumulative across attempts. |
 | `maxAttempts` | `number` | **30** | Maximum stabilization cycles before throwing `MaximumAttemptsToStabilizeFixtureReachedError`. |
 | `debug` | `boolean` | `false` | Logs warnings when `setInterval` is detected during stabilization. |
 
@@ -115,6 +115,21 @@ Options:
 - Run it outside Angular zone with `NgZone.runOutsideAngular(() => setInterval(...))`.
 
 See [Troubleshooting](../troubleshooting.md) for more details.
+
+## Timer-driven stabilization
+
+`stabilizationTimeAdvance` is a per-attempt virtual time step. Use it for debounce, throttle, and other timer-based flows.
+
+Rule of thumb:
+
+```text
+stabilizationTimeAdvance * maxAttempts >= timer delay needed to settle
+```
+
+Examples:
+
+- `debounceTime(300)` with `stabilizationTimeAdvance: 1` and `maxAttempts: 300`
+- `debounceTime(300)` with `stabilizationTimeAdvance: 10` and `maxAttempts: 30`
 
 ## Error handling
 

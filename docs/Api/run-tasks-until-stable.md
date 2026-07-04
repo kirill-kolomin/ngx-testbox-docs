@@ -32,7 +32,7 @@ Optional configuration object:
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `httpCallInstructions` | `HttpCallInstruction[]` | `[]` | Instructions for matching and responding to HTTP requests. |
-| `stabilizationTimeAdvance` | `number` | **0** | Time in ms to advance the virtual clock at the end of each satabilization attempt. |
+| `stabilizationTimeAdvance` | `number` | **0** | Time in ms to advance the virtual clock on each stabilization attempt. This is cumulative across attempts. |
 | `maxAttempts` | `number` | **30** | Maximum stabilization cycles before throwing. |
 | `debug` | `boolean` | `false` | Logs warnings when `setInterval` is detected. |
 
@@ -69,6 +69,8 @@ it('should load users', fakeAsync(() => {
 - This function processes only HTTP requests made using Angular `HttpClient`.
 - After calling `runTasksUntilStable`, the fixture is guaranteed to be stable.
 - When `setInterval` is used inside the Angular zone, stabilization may fail. Use `debug: true` to detect it.
+- `stabilizationTimeAdvance` is a per-attempt time step, not a one-time wait. For timer-driven flows, tune it together with `maxAttempts`.
+- Rule of thumb: `stabilizationTimeAdvance * maxAttempts` should cover the debounce, throttle, or timer delay you need to flush.
 
 ---
 
