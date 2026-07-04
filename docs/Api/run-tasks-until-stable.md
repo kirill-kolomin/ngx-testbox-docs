@@ -32,7 +32,7 @@ Optional configuration object:
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `httpCallInstructions` | `HttpCallInstruction[]` | `[]` | Instructions for matching and responding to HTTP requests. |
-| `eventualTimeAdvance` | `number` | **1000** | Time in ms to advance the virtual clock at the end of stabilization process. |
+| `stabilizationTimeAdvance` | `number` | **0** | Time in ms to advance the virtual clock at the end of each satabilization attempt. |
 | `maxAttempts` | `number` | **30** | Maximum stabilization cycles before throwing. |
 | `debug` | `boolean` | `false` | Logs warnings when `setInterval` is detected. |
 
