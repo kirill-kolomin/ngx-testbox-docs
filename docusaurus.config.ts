@@ -7,7 +7,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Ngx-Testbox',
   tagline: 'Integration testing is cool',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -83,6 +83,18 @@ const config: Config = {
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Tutorial',
+        },
+        {
+          label: 'v1',
+          to: 'https://kirill-kolomin.github.io/ngx-testbox-docs/',
+          position: 'right',
+          className: 'navbar-version-pill navbar-version-pill-active',
+        },
+        {
+          label: 'v2',
+          to: 'https://kirill-kolomin.github.io/ngx-testbox-docs-v2/',
+          position: 'right',
+          className: 'navbar-version-pill',
         },
         {
           href: 'https://github.com/kirill-kolomin/ngx-testbox',
