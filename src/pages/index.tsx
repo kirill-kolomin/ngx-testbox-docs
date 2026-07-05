@@ -36,7 +36,7 @@ export default function Home(): ReactNode {
     return (
         <Layout
             title={'Integration black-box testing'}
-            description="Description will go into a meta tag in <head />">
+            description="Integration testing for Angular with black-box approach, async control, and user-centric testing concept">
             <HomepageHeader/>
             <main>
                 <HomepageFeatures/>
