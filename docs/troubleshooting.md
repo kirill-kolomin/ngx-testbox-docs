@@ -4,6 +4,10 @@ sidebar_position: 4
 
 # Troubleshooting
 
+:::warning
+This is the stale documentation for ngx-testbox. Please visit [v2 documentation](https://kirill-kolomin.github.io/ngx-testbox-docs-v2/) to see the current version of ngx-testbox.
+:::
+
 There might be differences among Angular's versions that cause unexpected behaviour.
 On this page I described the cases that may occur while writing tests with Angular.
 
@@ -28,4 +32,3 @@ For sure, starting from Angular 18 it works fine.
 The issue when Angular zone is treated as stable even despite the fact there are pending HTTP requests in the queue.
 The reason is unknown to me.
 But you don't need to worry about it because **Ngx-Testbox** handles the case appropriately.
-

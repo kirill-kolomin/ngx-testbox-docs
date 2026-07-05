@@ -4,6 +4,10 @@ sidebar_position: 2
 
 # API definition
 
+:::warning
+This is the stale documentation for ngx-testbox. Please visit [v2 documentation](https://kirill-kolomin.github.io/ngx-testbox-docs-v2/) to see the current version of ngx-testbox.
+:::
+
 ## HttpMethod
 
 Represents an HTTP method (GET, POST, PUT, DELETE, etc.).

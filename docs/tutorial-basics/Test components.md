@@ -4,6 +4,10 @@ sidebar_position: 1
 
 # Component testing
 
+:::warning
+This is the stale documentation for ngx-testbox. Please visit [v2 documentation](https://kirill-kolomin.github.io/ngx-testbox-docs-v2/) to see the current version of ngx-testbox.
+:::
+
 ## Prerequisites
 
 Integration tests have a big advantage over unit tests: they can cover entire features.

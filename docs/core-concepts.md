@@ -4,6 +4,10 @@ sidebar_position: 2
 
 # Core concepts
 
+:::warning
+This is the stale documentation for ngx-testbox. Please visit [v2 documentation](https://kirill-kolomin.github.io/ngx-testbox-docs-v2/) to see the current version of ngx-testbox.
+:::
+
 **Ngx-testbox is a powerful tool for setting up black-box integration tests with minimal effort and full confidence in your codebase.**
 
 ## Combination of strict control with simple maintenance

@@ -4,6 +4,10 @@ sidebar_position: 1
 
 # Tutorial Intro
 
+:::warning
+This is the stale documentation for ngx-testbox. Please visit [v2 documentation](https://kirill-kolomin.github.io/ngx-testbox-docs-v2/) to see the current version of ngx-testbox.
+:::
+
 Let's discover **Ngx-testbox in less than 5 minutes**.
 
 ## Getting Started
