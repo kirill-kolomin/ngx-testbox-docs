@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Isometric cube, centered in 32x32, no background -->
+  <g transform="translate(16, 16)">
+    <g transform="translate(-10, -11)">
+      <!-- Top face -->
+      <polygon points="10,0 20,5.5 10,11 0,5.5" fill="#2d2d2d"/>
+      <!-- Left face -->
+      <polygon points="0,5.5 10,11 10,22 0,16.5" fill="#111111"/>
+      <!-- Right face -->
+      <polygon points="20,5.5 10,11 10,22 20,16.5" fill="#222222"/>
+      <!-- Edge lines -->
+      <line x1="10" y1="11" x2="10" y2="22" stroke="#3a3a3a" stroke-width="0.5"/>
+      <line x1="0" y1="5.5" x2="10" y2="11" stroke="#3a3a3a" stroke-width="0.5"/>
+      <line x1="20" y1="5.5" x2="10" y2="11" stroke="#3a3a3a" stroke-width="0.5"/>
+    </g>
+  </g>
+</svg>
